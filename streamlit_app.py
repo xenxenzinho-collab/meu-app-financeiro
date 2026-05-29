@@ -1,27 +1,36 @@
 import streamlit as st
 import pandas as pd
+import urllib.parse
 
-# Link da sua planilha
+# ID da planilha
 SHEET_ID = '10_Zgkv0QjBUTC_xvzy1JV4Y9rawbmdfhs-9kJBJBCg8'
-url = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv'
+
+# Definimos que vamos ler a aba 'Gastos'
+nome_da_aba = 'Gastos' 
+aba_encoded = urllib.parse.quote(nome_da_aba)
+url = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={aba_encoded}'
 
 st.title("💰 Controle Financeiro")
 
 @st.cache_data
 def load_data():
-    # Vamos tentar ler o CSV geral
     return pd.read_csv(url)
 
 try:
     df = load_data()
-    st.write("Colunas detectadas:", df.columns.tolist())
-    st.write("Primeiras 5 linhas da planilha:")
-    st.write(df.head())
     
-    # Se você vir a coluna de Valor aqui, copia o nome EXATO que aparecer
-    # e substitua onde está escrito 'Valor' abaixo:
-    total = df['Valor'].sum() 
-    st.write(f"Total: {total}")
+    # Exibe as colunas para conferência
+    st.write("Colunas encontradas:", df.columns.tolist())
     
+    # Filtro de mês (a coluna na aba Gastos chama-se 'Mês')
+    mes_escolhido = st.selectbox("Selecione o Mês:", df['Mês'].unique())
+
+    # Soma os valores da coluna 'Valor'
+    gastos_do_mes = df[df['Mês'] == mes_escolhido]
+    total = gastos_do_mes['Valor'].sum()
+
+    st.metric(label=f"Total de Gastos - {mes_escolhido}", value=f"R$ {total:,.2f}")
+    st.table(gastos_do_mes[['Gastos Cartão', 'Estabelecimento', 'Valor']])
+
 except Exception as e:
-    st.error(f"Erro ao ler os dados: {e}")
+    st.error(f"Erro: {e}")
