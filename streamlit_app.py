@@ -9,33 +9,29 @@ st.title("💰 Controle Financeiro")
 
 @st.cache_data
 def load_data():
-    return pd.read_csv(url)
+    df = pd.read_csv(url)
+    df.columns = df.columns.str.strip() # Remove espaços extras dos nomes
+    return df
 
-df = load_data()
-
-# Remove espaços extras dos nomes das colunas para evitar erros
-df.columns = df.columns.str.strip()
-
-st.write("Colunas encontradas agora:", df.columns.tolist())
-
-# Filtro
-if 'Mês de Referência' in df.columns:
-    mes_escolhido = st.selectbox("Selecione o Mês:", df['Mês de Referência'].unique())
+try:
+    df = load_data()
     
-    # Exibe os gastos
-    gastos_filtrados = df[df['Mês de Referência'] == mes_escolhido]
-    
-    # Verifica quais colunas existem para exibir na tabela
-    colunas_para_exibir = [col for col in ['Data', 'Estabelecimento', 'Valor'] if col in df.columns]
-    
-    if colunas_para_exibir:
-        st.table(gastos_filtrados[colunas_para_exibir])
-    else:
-        st.warning("As colunas 'Data', 'Estabelecimento' ou 'Valor' não foram encontradas na planilha.")
+    # Filtro
+    if 'Mês de Referência' in df.columns:
+        mes_escolhido = st.selectbox("Selecione o Mês:", df['Mês de Referência'].dropna().unique())
         
-    # Soma o total se a coluna Valor existir
-    if 'Valor' in df.columns:
+        # Filtra os dados
+        gastos_filtrados = df[df['Mês de Referência'] == mes_escolhido]
+        
+        # Exibe a tabela
+        st.write(f"Gastos de {mes_escolhido}:")
+        st.table(gastos_filtrados[['Data', 'Estabelecimento', 'Valor']])
+        
+        # Soma o total
         total = gastos_filtrados['Valor'].sum()
         st.metric(label="Total do Mês", value=f"R$ {total:,.2f}")
-else:
-    st.error("A coluna 'Mês de Referência' não foi encontrada.")
+    else:
+        st.error("A coluna 'Mês de Referência' não foi encontrada. Verifique o cabeçalho da aba 'Meses'.")
+
+except Exception as e:
+    st.error(f"Erro ao carregar: {e}")
