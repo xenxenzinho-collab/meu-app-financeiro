@@ -9,20 +9,19 @@ st.title("💰 Controle Financeiro")
 
 @st.cache_data
 def load_data():
+    # Vamos tentar ler o CSV geral
     return pd.read_csv(url)
 
-df = load_data()
-
-# DICA: Vamos ver quais colunas existem na tua planilha para não errar
-st.write("Colunas encontradas na planilha:", df.columns.tolist())
-
-# Filtro por mês
-mes_escolhido = st.selectbox("Selecione o Mês:", df['Mês de Referência'].unique())
-
-# Filtro e Soma (Certifica-te que o nome abaixo é igual a um dos nomes da lista que aparecerá acima)
-gastos_do_mes = df[df['Mês de Referência'] == mes_escolhido]
-total = gastos_do_mes['Valor'].sum()
-
-# Exibição
-st.metric(label=f"Total de Gastos - {mes_escolhido}", value=f"R$ {total:,.2f}")
-st.table(gastos_do_mes)
+try:
+    df = load_data()
+    st.write("Colunas detectadas:", df.columns.tolist())
+    st.write("Primeiras 5 linhas da planilha:")
+    st.write(df.head())
+    
+    # Se você vir a coluna de Valor aqui, copia o nome EXATO que aparecer
+    # e substitua onde está escrito 'Valor' abaixo:
+    total = df['Valor'].sum() 
+    st.write(f"Total: {total}")
+    
+except Exception as e:
+    st.error(f"Erro ao ler os dados: {e}")
